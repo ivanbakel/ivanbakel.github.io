@@ -153,7 +153,7 @@ NAVIGATION_ALT_LINKS = {
 }
 
 # Name of the theme to use.
-THEME = "bootblog4"
+THEME = "jidn"
 
 # Primary color of your theme. This will be used to customize your theme.
 # Must be a HEX value.
@@ -1374,3 +1374,9 @@ GLOBAL_CONTEXT_FILLER = []
 # Add any post types here that you want to be displayed without a title.
 # Ir your theme supports it, the titles will not be shown.
 TYPES_TO_HIDE_TITLE = []
+
+# See README.md for extra configuration details
+GLOBAL_CONTEXT.update({
+    "JIDN": {},  # Extra info about authors
+    # "JIDN-theme": "theme-base-blue",
+})
