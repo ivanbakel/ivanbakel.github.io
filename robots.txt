@@ -1,0 +1,4 @@
+Sitemap: https://ivanbakel.github.io/sitemapindex.xml
+
+User-Agent: *
+Host: ivanbakel.github.io

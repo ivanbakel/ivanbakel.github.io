@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="A portfolio and content website.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal Website</title>
+<link href="assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900" rel="stylesheet">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
+<link rel="alternate" type="application/rss+xml" title="RSS" hreflang="en" href="rss.xml">
+<link rel="canonical" href="https://ivanbakel.github.io/">
+<!--[if lt IE 9]><script src="assets/js/html5.js"></script><![endif]--><link rel="prefetch" href="posts/intutionistic-logic-in-haskell/" type="text/html">
+</head>
+<body>
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+<!-- Header and menu bar -->
+<div class="container">
+      <header class="blog-header py-3"><div class="row nbb-header align-items-center">
+          <div class="col-md-3 col-xs-2 col-sm-2" style="width: auto;">
+            <button class="navbar-toggler navbar-light bg-light nbb-navbar-toggler" type="button" data-toggle="collapse" data-target=".bs-nav-collapsible" aria-controls="bs-navbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse bs-nav-collapsible bootblog4-search-form-holder">
+                
+            </div>
+        </div>
+          <div class="col-md-6 col-xs-10 col-sm-10 bootblog4-brand" style="width: auto;">
+            <a class="navbar-brand blog-header-logo text-dark" href=".">
+
+            <span id="blog-title">Personal Website</span>
+        </a>
+          </div>
+            <div class="col-md-3 justify-content-end align-items-center bs-nav-collapsible collapse flex-collapse bootblog4-right-nav">
+            <nav class="navbar navbar-light bg-white"><ul class="navbar-nav bootblog4-right-nav"></ul></nav>
+</div>
+    </div>
+</header><nav class="navbar navbar-expand-md navbar-light bg-white static-top"><div class="collapse navbar-collapse bs-nav-collapsible" id="bs-navbar">
+            <ul class="navbar-nav nav-fill d-flex w-100">
+<li class="nav-item">
+<a href="archive.html" class="nav-link">Archive</a>
+                </li>
+<li class="nav-item">
+<a href="categories/" class="nav-link">Tags</a>
+                </li>
+<li class="nav-item">
+<a href="rss.xml" class="nav-link">RSS feed</a>
+
+                
+            </li>
+</ul>
+</div>
+<!-- /.navbar-collapse -->
+</nav>
+</div>
+
+<div class="container" id="content" role="main">
+    <div class="body-content">
+        <!--Body content-->
+        
+        
+        
+    
+        
+
+    
+        
+    <div class="postindex">
+            <article class="h-entry post-text" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title"><a href="posts/intutionistic-logic-in-haskell/" class="u-url">Intuitionistic logic in Haskell</a></h1>
+                <div class="metadata">
+                    <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+                        Isaac van Bakel
+                    </span></p>
+            <p class="dateline">
+            <a href="posts/intutionistic-logic-in-haskell/" rel="bookmark">
+            <time class="published dt-published" datetime="2020-09-19T00:00:00+01:00" itemprop="datePublished" title="2020-09-19">2020-09-19</time></a>
+            </p>
+                </div>
+            </header><div class="e-content entry-content">
+                    <div>
+<h2>Intuitionistic logic in Haskell</h2>
+<p>This article assumes a familiarity with Haskell, and some basic knowledge of classical logic (if you don't know about different varieties of logic, the one you <em>do</em> know is probably classical).</p>
+<h3>Terminating Haskell</h3>
+<h4>The <code>Void</code> datatype</h4>
+<p>The <code>Void</code> datatype is part of the Haskell standard library, and should be well-known by most Haskellers. In short, <code>Void</code> has the following declaration</p>
+<pre class="code literal-block"><span class="kr">data</span> <span class="kt">Void</span>
+</pre>
+
+<p>That is: it's a datatype, with an empty collection of constructors (you may be surprised this is a valid declaration). The consequence is that it's impossible to construct any value with type <code>Void</code>, a fact that both programmers and the compiler can exploit.</p>
+<p>Though a <code>Void</code> value is <em>unconstructable</em>, it is still very simple to write a valid Haskell term which has the <code>Void</code> type.</p>
+<pre class="code literal-block"><span class="nf">aVoidTerm</span> <span class="ow">::</span> <span class="kt">Void</span>
+<span class="nf">aVoidTerm</span> <span class="ow">=</span> <span class="n">aVoidTerm</span>
+
+<span class="c1">-- Alternatively:</span>
+<span class="nf">aVoidTerm</span> <span class="ow">=</span> <span class="n">undefined</span>
+<span class="c1">-- Or even:</span>
+<span class="nf">aVoidTerm</span> <span class="ow">=</span> <span class="ne">error</span> <span class="s">"Tried to evaluate a `Void` term"</span>
+</pre>
+
+<p>These terms all share the property of being <strong>non-terminating</strong>. While lazy evaluation lets them appear in programs without any problem, any attempt to evaluate these terms will fail: either because of an infinite loop or a runtime error.</p>
+<h4>Terminating terms</h4>
+<p><strong>Terminating</strong> terms are the subset of all Haskell terms which can be evaluated in finite time without error. While it's impossible to decide in general if a particular term is terminating, we can restrict our language so that we can <em>only</em> write terminating terms. One way to do that is to require that recursive functions are <strong>strictly positive</strong> - so all recursive calls are with arguments that are "smaller" than the current argument - and <strong>total</strong> - defined for every possible argument.</p>
+<p>If we implement those two restrictions in Haskell, we get a subset of the language that can only express terminating Haskell terms - though it can't express every terminating Haskell term. In terminating Haskell, we can <em>no longer</em> write terms with a <code>Void</code> type: there's no way to define such a term recursively, because it won't get "smaller"; and there's no way to leave the value <code>undefined</code>.</p>
+<p>If you can force the evaluation of a <code>Void</code> term, you can't get some terminating value, so there is no well-defined "after" evaluation. The compiler even lets you exploit this fact to write a terminating term that evaluates a <code>Void</code> value, and then returns a value of <em>any type</em>.</p>
+<pre class="code literal-block"><span class="cm">{-# LANGUAGE EmptyCase #-}</span>
+<span class="nf">useAVoid</span> <span class="ow">::</span> <span class="kt">Void</span> <span class="ow">-&gt;</span> <span class="n">a</span>
+<span class="nf">useAVoid</span> <span class="n">void</span> <span class="ow">=</span> <span class="kr">case</span> <span class="n">void</span> <span class="kr">of</span>
+</pre>
+
+<p>This code uses the <code>EmptyCase</code> language extension to allow us to write a <code>case</code> statement with no branches - remembering that <code>case</code> statements have to be total, this means that the above code only compiles because <code>Void</code> has <em>no cases</em> to branch on. While the function definition itself is terminating, the result can have type <code>a</code>, for any choice of <code>a</code>, because by evaluating the argument it will never terminate and be forced to produce an <code>a</code>.</p>
+<h4>Inhabited types</h4>
+<p><code>Void</code> has the property of being <strong>uninhabited</strong>, because it has no "inhabitants" - valid terminating terms which have the <code>Void</code> type. Types with inhabitants are, unsurprisingly, said to be <strong>inhabited</strong>.</p>
+<p>We have already seen that <code>Void -&gt; a</code> is inhabited for any choice of <code>a</code>, even uninhabited choices - in fact, this is only because <code>Void</code> is uninhabited. For a (terminating) function with type <code>a -&gt; b</code>, <code>b</code> can be uninhabited only if <code>a</code> is uninhabited - otherwise the function could evaluate the argument of type <code>a</code>, have it terminate, and be forced to produce a terminating value of type <code>b</code>: an impossibility.</p>
+<p>A consequence is that the type <code>a -&gt; Void</code> is inhabited only for choices of <code>a</code> which are uninhabited. Moreover, if <code>a</code> is uninhabited, then we can write a terminating term with type <code>a -&gt; Void</code> - just like we did for <code>Void -&gt; a</code> - by exploiting the fact that <code>a</code> has no inhabitants. The result is: <code>a -&gt; Void</code> is inhabited if and only if <code>a</code> is uninhabited, and vice versa.</p>
+<p>We can extend this reasoning about inhabitants to many other basic Haskell types. <code>Maybe a</code>, for example, is always inhabited by the terminating term <code>Nothing</code>, even for uninhabited choices of <code>a</code>. <code>Either a b</code> is inhabited provided one of <code>a</code> or <code>b</code> is inhabited, because you could wrap the terminating term with type <code>a</code> (or <code>b</code>) in a <code>Left</code> (or <code>Right</code>) constructor to give a terminating term of type <code>Either a b</code>. Conversely, if <code>Either a b</code> is inhabited, then <em>at least one</em> of <code>a</code> or <code>b</code> must be inhabited (though the proof is much more difficult to summarize). In a similar vein, the tuple type <code>(a, b)</code> is inhabited if and only if <em>both</em> <code>a</code>, <code>b</code> are inhabited.</p>
+<h3>Types and logic</h3>
+<p>Astute readers may have already spotted the point of the above discussion: this reasoning about inhabited types looks a lot like formal logic.</p>
+<p>If inhabitedness is "truth", then uninhabitedness is "falsehood". Continuing the comparison, <code>a -&gt; Void</code> is the "negation" of <code>a</code> - since it is uninhabited if and only if <code>a</code> is inhabited, and vice versa; <code>Either a b</code> is the "or" of <code>a</code> and <code>b</code>, since it is inhabited if and only if at least one of <code>a</code>, <code>b</code> is'; and <code>(a, b)</code> is the "and".</p>
+<p>It remains to check that <code>a -&gt; b</code> follows the expected behaviour of "implies" - that <code>a -&gt; b</code> is uninhabited (aka false) if and only if <code>a</code> is inhabited (true) and <code>b</code> is uninhabited (false). In fact, due to arguments which include the ones made earlier on, we find that this is the case - and that <code>-&gt;</code>, as well as resembling the "implies" arrow, also seems to act like one.</p>
+<p>The similarities don't stop there. If we introduce some type aliases to make our types easier to read:</p>
+<pre class="code literal-block"><span class="cm">{-# LANGUAGE TypeOperators #-}</span>
+<span class="kr">type</span> <span class="kt">Not</span> <span class="n">a</span> <span class="ow">=</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">Void</span>
+<span class="kr">type</span> <span class="n">a</span> <span class="o">/\</span> <span class="n">b</span> <span class="ow">=</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+<span class="kr">type</span> <span class="n">a</span> <span class="o">\/</span> <span class="n">b</span> <span class="ow">=</span> <span class="kt">Either</span> <span class="n">a</span> <span class="n">b</span>
+</pre>
+
+<p>Then we can wonder if some inhabitants exist for certain types which correspond to logical statements we know to be true. One example would be the commutativity of <code>/\</code> - that <code>a /\ b -&gt; b /\ a</code>. A programmer could quickly produce such an inhabitant:</p>
+<pre class="code literal-block"><span class="nf">andComm</span> <span class="ow">::</span> <span class="n">a</span> <span class="o">/\</span> <span class="n">b</span> <span class="ow">-&gt;</span> <span class="n">b</span> <span class="o">/\</span> <span class="n">a</span>
+<span class="c1">-- i.e. :: (a, b) -&gt; (b, a)</span>
+<span class="nf">andComm</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre>
+
+<p>We can also wonder if types which corresponding to false logical statements are <em>uninhabited</em>. For example, <code>a /\ Not a</code> should never hold, so the type should be uninhabited. It follows that <code>Not (a /\ Not a)</code> is inhabited: in fact it is.</p>
+<pre class="code literal-block"><span class="nf">explosion</span> <span class="ow">::</span> <span class="kt">Not</span> <span class="p">(</span><span class="n">a</span> <span class="o">/\</span> <span class="kt">Not</span> <span class="n">a</span><span class="p">)</span>
+<span class="c1">--   i.e. :: (a, a -&gt; Void) -&gt; Void</span>
+<span class="nf">explosion</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">=</span> <span class="n">f</span> <span class="n">x</span>
+</pre>
+
+<p>Programmers who struggle with logic may notice that rewriting the type in terms of Haskell types makes for much simpler reading: it's pretty easy to spot that <code>(a, a -&gt; Void) -&gt; Void</code> is inhabited, and even to immediately write out the above inhabitant.</p>
+<h4>The excluded middle</h4>
+<p>A pretty important rule for classical logic is the "law of the excluded middle" - that every statement is either definitely true, or definitely false. </p>
+<p>We can express this in our types as <code>a \/ Not a</code>. But can we inhabit it? For particular choices of <code>a</code>, sure: if we knew that <code>a</code> was <code>Int</code>, or <code>Void</code>, or even <code>Maybe b</code>, we would be able to produce an inhabitant easily:</p>
+<pre class="code literal-block"><span class="nf">intLOEM</span> <span class="ow">::</span> <span class="kt">Int</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="kt">Int</span>
+<span class="nf">intLOEM</span> <span class="ow">=</span> <span class="kt">Left</span> <span class="mi">1</span>
+
+<span class="nf">voidLOEM</span> <span class="ow">::</span> <span class="kt">Void</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="kt">Void</span>
+<span class="c1">--  i.e. :: Either Void (Void -&gt; Void)</span>
+<span class="nf">voidLOEM</span> <span class="ow">=</span> <span class="kt">Right</span> <span class="n">id</span>
+
+<span class="nf">maybeLOEM</span> <span class="ow">::</span> <span class="p">(</span><span class="kt">Maybe</span> <span class="n">b</span><span class="p">)</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="p">(</span><span class="kt">Maybe</span> <span class="n">b</span><span class="p">)</span>
+<span class="nf">maybeLOEM</span> <span class="ow">=</span> <span class="kt">Left</span> <span class="p">(</span><span class="kt">Nothing</span><span class="p">)</span>
+</pre>
+
+<p>But for a <em>polymorphic</em> <code>a</code>, we struggle. While every type in Haskell is definitely inhabited or uninhabited, we can't in general produce an inhabitant of the type, or an inhabitant for the type's "negation", without knowing <em>which</em> type we're dealing with.</p>
+<pre class="code literal-block"><span class="kt">LOEM</span> <span class="ow">::</span> <span class="n">a</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="n">a</span>
+<span class="kt">LOEM</span> <span class="ow">=</span> <span class="o">???</span> <span class="c1">-- uh oh</span>
+</pre>
+
+<p>Does this mean that our strange similarities are just a coincidence? After all, <code>a \/ Not a</code> is certainly true - so we expect to be able to produce an inhabitant. Notably, we also fail to "negate" the law of excluded middle - we can't produce an inhabitant for <code>Not (a \/ Not a)</code> either. In the logic of our types, we don't know if <code>a \/ Not a</code> is "true" or "false".</p>
+<p>What has actually happened is that we've departed from <em>classical</em> logic: our types do behave like a logical system, just a different one.</p>
+<h4>What makes classical logic?</h4>
+<p>While most users of logic - particularly mathematicians - take the law of excluded middle as a universal truth, and apply it liberally in proofs, it's not a necessary part of any logical system. Classical logic is actually defined in part by the existence of this law, and double negation: <code>Not (Not a) -&gt; a</code> (interested readers can <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.6941">read more about these laws</a>).</p>
+<p>Double negation is another statement that doesn't have an inhabitant in Haskell - and nor does its negation. In a logical system without either law, several statements which are true in classical logic also no longer hold: Peirce's law, <code>((a -&gt; b) -&gt; a) -&gt; a</code>; the double contrapositive, <code>(Not b -&gt; Not a) -&gt; (a -&gt; b)</code>; the implies equivalence <code>(a -&gt; b) -&gt; (Not a \/ b)</code>; de Morgan's laws, such as <code>Not (Not a /\ Not b) -&gt; (a \/ b)</code>; and many more. Similarly, none of these Haskell types have inhabitants.</p>
+<h4>Intuitionistic logic</h4>
+<p>If the logic that we see in Haskell types isn't classical logic, what then is it?</p>
+<p>The feature of Haskell that prevents all these types from having inhabitants is that, in Haskell, we must <em>construct terms explicitly</em>. In classical logic, the statement <code>a \/ b</code> holds if and only if at least one of <code>a</code>, <code>b</code> holds - but our knowledge of <code>a \/ b</code> doesn't necessarily tell us which one it is. In Haskell, on the other hand, you can use an <code>Either a b</code> to get either an <code>a</code> or a <code>b</code>, by <em>deconstructing</em> the term. In other words, Haskell requires that every term of type <code>a \/ b</code> only be <em>constructed</em>, from a term with type <code>a</code> or <code>b</code>.</p>
+<p>This limitation doesn't just appear in Haskell. In fact, this exact behaviour describes <strong>intuitionistic logic</strong> - a subset of classical logic. Intuitionistic logic is precisely what you get when you get rid of the laws of the excluded middle and double negation frrom classical logic. The resulting system still makes sense - it's just less powerful. Lots of statements with classical proofs have no equivalent intuitionistic proof.</p>
+<h4>Constructive mathematics and decidability</h4>
+<p>Just like classical logic tries to formalise the reasoning of classical mathematics, intuitionistic logic tries to formalise the reasoning of <strong>constructive mathematics</strong> (for this reason, it is sometimes called <em>constructive logic</em>).</p>
+<p>Godel's successful proof of the first Incompleteness theorem showed that every system of reasoning about numbers included statements that were <strong>undecidable</strong>. These statements couldn't be proven, and their contradiction couldn't be proven - in other words, it was impossible for <em>some</em> statement <code>a</code> to prove either <code>a</code> or <code>Not a</code>.</p>
+<p>As a result, several mathematicians became dissatisfied with classical logic: a binary idea of truth no longer seemed correct. They devised a new mathematics without the use of the law of excluded middle or double negation in proofs - since a proof of <code>Not (Not a)</code> only showed that <code>a</code> wasn't false: not that it was true. This system was termed <strong>constructive mathematics</strong>.</p>
+<p>In constructive mathematics, as in intuitionistic logic, proofs are only possible by explicit construction. To prove <code>a \/ b</code>, it is necessary to give a proof of <code>a</code> or a proof of <code>b</code> - it's not enough to argue that at least one must be true. This system ends up being weaker - several statements which are provable in classical mathematics are undecidable in constructive mathematics.</p>
+<h4>Decidability as a constraint</h4>
+<p>Returning to Haskell for a moment, we can use this insight to produce a weaker version of the law of the excluded middle, just for <em>decidable</em> statements. Haskell allows us to express decidability as a constraint on a logical statement (a type), by using a typeclass:</p>
+<pre class="code literal-block"><span class="kr">class</span> <span class="kt">Decidable</span> <span class="n">a</span> <span class="kr">where</span>
+  <span class="n">decide</span> <span class="ow">::</span> <span class="n">a</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="n">a</span>
+
+<span class="kt">LOEM</span> <span class="ow">::</span> <span class="p">(</span><span class="kt">Decidable</span> <span class="n">a</span><span class="p">)</span> <span class="ow">=&gt;</span> <span class="n">a</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="n">a</span>
+<span class="kt">LOEM</span> <span class="ow">=</span> <span class="n">decide</span>
+</pre>
+
+<p>Restricting ourselves to decidable statements is even enough to re-introduce double negation:</p>
+<pre class="code literal-block"><span class="nf">doubleNegation</span> <span class="ow">::</span> <span class="p">(</span><span class="kt">Decidable</span> <span class="n">a</span><span class="p">)</span> <span class="ow">=&gt;</span> <span class="kt">Not</span> <span class="p">(</span><span class="kt">Not</span> <span class="n">a</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">a</span>
+<span class="nf">doubleNegation</span> <span class="n">doubleNegative</span>
+  <span class="ow">=</span> <span class="kr">case</span> <span class="p">(</span><span class="n">decide</span> <span class="ow">::</span> <span class="n">a</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="n">a</span><span class="p">)</span> <span class="kr">of</span>
+      <span class="kt">Left</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">a</span>
+      <span class="kt">Right</span> <span class="p">(</span><span class="n">notA</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">useAVoid</span> <span class="p">(</span><span class="n">doubleNegative</span> <span class="n">notA</span><span class="p">)</span>
+</pre>
+
+<h3>The Curry-Howard isomorphism</h3>
+<p>So Haskell types look like logical statements - and in particular, it looks like statements provable in intuitionistic logic correspond to inhabited Haskell types. But what does that mean for Haskell <em>terms</em>?</p>
+<h4>Code as proof</h4>
+<p>To the Haskell compiler, a (terminating) term is a demonstration that a particular type is inhabited. In declaring the type signature for a definition, you claim the type is inhabited: in the definition itself, you <em>prove</em> it. When you consider types as a logic, this analogy makes even more sense: where a type is a logical statement, a term is a proof that the type is inhabited, and so that the statement is true. Proving the negation of a statement is done by showing that the negated type is inhabited.</p>
+<p>This matchup - types as statements, terms as proof - hasn't gone unnoticed among computer scientists: it's been described in <a href="http://www.dcc.fc.up.pt/~acm/howard.pdf">informal papers</a> since the 70s. Named the <strong>Curry-Howard Correspondence</strong> (or isomorphism), it was first spotted in the lambda calculus - the functional abstract computer that Haskell was inspired by.</p>
+<h4>Computing proofs</h4>
+<p>One of the most interesting parts of the CHC comes from considering <code>-&gt;</code> - both implication and function. The type <code>a -&gt; b</code> is both the logical statement that <code>a</code> implies <code>b</code>, and the type of transformations of values of type <code>a</code> into values of type <code>b</code>. But since a value of type <code>a</code> is a proof for <code>a</code>, such a transformation also <em>transforms proofs</em>: given a proof for <code>a</code>, it yields a proof for <code>b</code>.</p>
+<p>And since proofs are code, that means that evaluating a proof involving running those proof transformations. A Haskell term like <code>f x</code> with type <code>b</code> is made of a proof <code>f</code> of <code>a -&gt; b</code>, and a proof <code>x</code> of <code>a</code> (for some <code>a</code>). In <em>running</em> <code>f x</code>, we use the proof of <code>a -&gt; b</code> combined with the proof of <code>a</code> to get a proof for <code>b</code>: and the resulting value has the same type. By evaluating a proof, we get a new proof for the same statement. In other words, computation <em>simplifies</em> proofs.</p>
+<h4>Cut-free proofs</h4>
+<p>But what does this "simplification" actually mean in a proof? How can proofs transform other proofs? The answer comes from considering what our logical types actually mean. <code>a -&gt; b</code> is a representation of the statement "from the hypothesis a, it is possible to prove b". Inhabitants of <code>a -&gt; b</code> are proofs which assume that <code>a</code> is true, and use it to construct a proof of <code>b</code>. But in order to <em>use</em> such a proof to prove <code>b</code>, it is necessary to produce a proof of <code>a</code>: and the resulting proof has some redundancy. If you can prove <code>a</code>, there's no need for another proof to <em>assume</em> that <code>a</code> is true - it could just use the proof of <code>a</code>.</p>
+<p>Consider the same situation in Haskell. If you apply a function to an argument</p>
+<pre class="code literal-block"><span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="ow">-&gt;</span> <span class="o">...</span><span class="p">)</span> <span class="n">t</span>
+</pre>
+
+<p>then computing the function application substitutes the argument value into the function body.</p>
+<pre class="code literal-block"><span class="kr">let</span> <span class="n">x</span> <span class="ow">=</span> <span class="n">t</span> <span class="kr">in</span> <span class="o">...</span>
+</pre>
+
+<p>This term could be written both ways: the behaviour is the same. The only difference is that the first version, when computed, turns into the second.</p>
+<p>This construction - proving both an implication and its assumption - is called a <strong>cut</strong> in a proof. When we evaluate a proof as a Haskell term, we actually <em>eliminate</em> the cuts in the proof: since a cut is just a function application, and computing function applications is how Haskell code is executed. Since we are limited to terminating terms, executing proofs must eventually give us a simplified proof with <em>no cuts</em> in it (because it cannot be simplified any more).</p>
+<p>This line of reasoning leads us to a very significant result about intuitionistic (and classical) proofs: the <strong>cut elimination theorem</strong>. Shown by <a href="https://link.springer.com/article/10.1007/BF01201363">Gentzen</a> in 1935, the theorem states that every statement with a proof that contains cuts, also has a proof that contains <em>no</em> cuts. We have the framework to prove the same result: if every intuitionistic proof corresponds to a terminating Haskell term, where cuts are function application, then computation does the rest of the work. To get a cut-free version of an existing proof, it is sufficient to run the proof fully.</p>
+</div>
+                </div>
+            </article>
+</div>
+    
+
+    
+
+    
+
+
+        <!--End of body content-->
+
+        <footer id="footer">
+            Contents © 2020         <a href="mailto:ivb@vanbakel.io">Isaac van Bakel</a> - Powered by         <a href="https://getnikola.com" rel="nofollow">Nikola</a>         
+            
+            
+        </footer>
+</div>
+</div>
+
+
+        <script src="assets/js/all-nocdn.js"></script><script>
+    baguetteBox.run('div#content', {
+        ignoreClass: 'islink',
+        captions: function(element) {
+            return element.getElementsByTagName('img')[0].alt;
+    }});
+    </script>
+</body>
+</html>
