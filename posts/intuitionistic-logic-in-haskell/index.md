@@ -1,8 +1,11 @@
+<!--
 .. title: Intuitionistic logic in Haskell
+.. slug: intuitionistic-logic-in-haskell
 .. date: 2020-09-19
 .. tags:
 .. link:
 .. description:
+-->
 
 # Intuitionistic logic in Haskell
 

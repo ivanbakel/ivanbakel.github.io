@@ -15,7 +15,7 @@
  </url>
  <url>
   <loc>https://ivanbakel.github.io/archive.html</loc>
-  <lastmod>2020-09-19T14:01:00Z</lastmod>
+  <lastmod>2020-09-23T22:42:00Z</lastmod>
  </url>
  <url>
   <loc>https://ivanbakel.github.io/categories/</loc>
@@ -30,7 +30,11 @@
   <lastmod>2020-09-19T12:11:00Z</lastmod>
  </url>
  <url>
-  <loc>https://ivanbakel.github.io/posts/intutionistic-logic-in-haskell/</loc>
-  <lastmod>2020-09-19T12:23:00Z</lastmod>
+  <loc>https://ivanbakel.github.io/posts/intuitionistic-logic-in-haskell/</loc>
+  <lastmod>2020-09-23T22:43:00Z</lastmod>
+ </url>
+ <url>
+  <loc>https://ivanbakel.github.io/posts/theorem-proving-in-haskell/</loc>
+  <lastmod>2020-09-23T22:42:00Z</lastmod>
  </url>
 </urlset>
