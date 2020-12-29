@@ -67,7 +67,6 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
 <p>The <code>Void</code> datatype is part of the Haskell standard library, and should be well-known by most Haskellers. In short, <code>Void</code> has the following declaration</p>
 <pre class="code literal-block"><span class="kr">data</span> <span class="kt">Void</span>
 </pre>
-
 <p>That is: it's a datatype, with an empty collection of constructors (you may be surprised this is a valid declaration). The consequence is that it's impossible to construct any value with type <code>Void</code>, a fact that both programmers and the compiler can exploit.</p>
 <p>Though a <code>Void</code> value is <em>unconstructable</em>, it is still very simple to write a valid Haskell term which has the <code>Void</code> type.</p>
 <pre class="code literal-block"><span class="nf">aVoidTerm</span> <span class="ow">::</span> <span class="kt">Void</span>
@@ -78,7 +77,6 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
 <span class="c1">-- Or even:</span>
 <span class="nf">aVoidTerm</span> <span class="ow">=</span> <span class="ne">error</span> <span class="s">"Tried to evaluate a `Void` term"</span>
 </pre>
-
 <p>These terms all share the property of being <strong>non-terminating</strong>. While lazy evaluation lets them appear in programs without any problem, any attempt to evaluate these terms will fail: either because of an infinite loop or a runtime error.</p>
 <h4>Terminating terms</h4>
 <p><strong>Terminating</strong> terms are the subset of all Haskell terms which can be evaluated in finite time without error. While it's impossible to decide in general if a particular term is terminating, we can restrict our language so that we can <em>only</em> write terminating terms. One way to do that is to require that recursive functions are <strong>strictly positive</strong> - so all recursive calls are with arguments that are "smaller" than the current argument - and <strong>total</strong> - defined for every possible argument.</p>
@@ -88,7 +86,6 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
 <span class="nf">useAVoid</span> <span class="ow">::</span> <span class="kt">Void</span> <span class="ow">-&gt;</span> <span class="n">a</span>
 <span class="nf">useAVoid</span> <span class="n">void</span> <span class="ow">=</span> <span class="kr">case</span> <span class="n">void</span> <span class="kr">of</span>
 </pre>
-
 <p>This code uses the <code>EmptyCase</code> language extension to allow us to write a <code>case</code> statement with no branches - remembering that <code>case</code> statements have to be total, this means that the above code only compiles because <code>Void</code> has <em>no cases</em> to branch on. While the function definition itself is terminating, the result can have type <code>a</code>, for any choice of <code>a</code>, because by evaluating the argument it will never terminate and be forced to produce an <code>a</code>.</p>
 <h4>Inhabited types</h4>
 <p><code>Void</code> has the property of being <strong>uninhabited</strong>, because it has no "inhabitants" - valid terminating terms which have the <code>Void</code> type. Types with inhabitants are, unsurprisingly, said to be <strong>inhabited</strong>.</p>
@@ -105,19 +102,16 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
 <span class="kr">type</span> <span class="n">a</span> <span class="o">/\</span> <span class="n">b</span> <span class="ow">=</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
 <span class="kr">type</span> <span class="n">a</span> <span class="o">\/</span> <span class="n">b</span> <span class="ow">=</span> <span class="kt">Either</span> <span class="n">a</span> <span class="n">b</span>
 </pre>
-
 <p>Then we can wonder if some inhabitants exist for certain types which correspond to logical statements we know to be true. One example would be the commutativity of <code>/\</code> - that <code>a /\ b -&gt; b /\ a</code>. A programmer could quickly produce such an inhabitant:</p>
 <pre class="code literal-block"><span class="nf">andComm</span> <span class="ow">::</span> <span class="n">a</span> <span class="o">/\</span> <span class="n">b</span> <span class="ow">-&gt;</span> <span class="n">b</span> <span class="o">/\</span> <span class="n">a</span>
 <span class="c1">-- i.e. :: (a, b) -&gt; (b, a)</span>
 <span class="nf">andComm</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 </pre>
-
 <p>We can also wonder if types which corresponding to false logical statements are <em>uninhabited</em>. For example, <code>a /\ Not a</code> should never hold, so the type should be uninhabited. It follows that <code>Not (a /\ Not a)</code> is inhabited: in fact it is.</p>
 <pre class="code literal-block"><span class="nf">explosion</span> <span class="ow">::</span> <span class="kt">Not</span> <span class="p">(</span><span class="n">a</span> <span class="o">/\</span> <span class="kt">Not</span> <span class="n">a</span><span class="p">)</span>
 <span class="c1">--   i.e. :: (a, a -&gt; Void) -&gt; Void</span>
 <span class="nf">explosion</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">=</span> <span class="n">f</span> <span class="n">x</span>
 </pre>
-
 <p>Programmers who struggle with logic may notice that rewriting the type in terms of Haskell types makes for much simpler reading: it's pretty easy to spot that <code>(a, a -&gt; Void) -&gt; Void</code> is inhabited, and even to immediately write out the above inhabitant.</p>
 <h4>The excluded middle</h4>
 <p>A pretty important rule for classical logic is the "law of the excluded middle" - that every statement is either definitely true, or definitely false. </p>
@@ -132,12 +126,10 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
 <span class="nf">maybeLOEM</span> <span class="ow">::</span> <span class="p">(</span><span class="kt">Maybe</span> <span class="n">b</span><span class="p">)</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="p">(</span><span class="kt">Maybe</span> <span class="n">b</span><span class="p">)</span>
 <span class="nf">maybeLOEM</span> <span class="ow">=</span> <span class="kt">Left</span> <span class="p">(</span><span class="kt">Nothing</span><span class="p">)</span>
 </pre>
-
 <p>But for a <em>polymorphic</em> <code>a</code>, we struggle. While every type in Haskell is definitely inhabited or uninhabited, we can't in general produce an inhabitant of the type, or an inhabitant for the type's "negation", without knowing <em>which</em> type we're dealing with.</p>
 <pre class="code literal-block"><span class="kt">LOEM</span> <span class="ow">::</span> <span class="n">a</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="n">a</span>
 <span class="kt">LOEM</span> <span class="ow">=</span> <span class="o">???</span> <span class="c1">-- uh oh</span>
 </pre>
-
 <p>Does this mean that our strange similarities are just a coincidence? After all, <code>a \/ Not a</code> is certainly true - so we expect to be able to produce an inhabitant. Notably, we also fail to "negate" the law of excluded middle - we can't produce an inhabitant for <code>Not (a \/ Not a)</code> either. In the logic of our types, we don't know if <code>a \/ Not a</code> is "true" or "false".</p>
 <p>What has actually happened is that we've departed from <em>classical</em> logic: our types do behave like a logical system, just a different one.</p>
 <h4>What makes classical logic?</h4>
@@ -160,7 +152,6 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
 <span class="kt">LOEM</span> <span class="ow">::</span> <span class="p">(</span><span class="kt">Decidable</span> <span class="n">a</span><span class="p">)</span> <span class="ow">=&gt;</span> <span class="n">a</span> <span class="o">\/</span> <span class="kt">Not</span> <span class="n">a</span>
 <span class="kt">LOEM</span> <span class="ow">=</span> <span class="n">decide</span>
 </pre>
-
 <p>Restricting ourselves to decidable statements is even enough to re-introduce double negation:</p>
 <pre class="code literal-block"><span class="nf">doubleNegation</span> <span class="ow">::</span> <span class="p">(</span><span class="kt">Decidable</span> <span class="n">a</span><span class="p">)</span> <span class="ow">=&gt;</span> <span class="kt">Not</span> <span class="p">(</span><span class="kt">Not</span> <span class="n">a</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">a</span>
 <span class="nf">doubleNegation</span> <span class="n">doubleNegative</span>
@@ -168,7 +159,6 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
       <span class="kt">Left</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">a</span>
       <span class="kt">Right</span> <span class="p">(</span><span class="n">notA</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">useAVoid</span> <span class="p">(</span><span class="n">doubleNegative</span> <span class="n">notA</span><span class="p">)</span>
 </pre>
-
 <h3>The Curry-Howard isomorphism</h3>
 <p>So Haskell types look like logical statements - and in particular, it looks like statements provable in intuitionistic logic correspond to inhabited Haskell types. But what does that mean for Haskell <em>terms</em>?</p>
 <h4>Code as proof</h4>
@@ -182,11 +172,9 @@ This article assumes a familiarity with Haskell, and some basic knowledge of cla
 <p>Consider the same situation in Haskell. If you apply a function to an argument</p>
 <pre class="code literal-block"><span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="ow">-&gt;</span> <span class="o">...</span><span class="p">)</span> <span class="n">t</span>
 </pre>
-
 <p>then computing the function application substitutes the argument value into the function body.</p>
 <pre class="code literal-block"><span class="kr">let</span> <span class="n">x</span> <span class="ow">=</span> <span class="n">t</span> <span class="kr">in</span> <span class="o">...</span>
 </pre>
-
 <p>This term could be written both ways: the behaviour is the same. The only difference is that the first version, when computed, turns into the second.</p>
 <p>This construction - proving both an implication and its assumption - is called a <strong>cut</strong> in a proof. When we evaluate a proof as a Haskell term, we actually <em>eliminate</em> the cuts in the proof: since a cut is just a function application, and computing function applications is how Haskell code is executed. Since we are limited to terminating terms, executing proofs must eventually give us a simplified proof with <em>no cuts</em> in it (because it cannot be simplified any more).</p>
 <p>This line of reasoning leads us to a very significant result about intuitionistic (and classical) proofs: the <strong>cut elimination theorem</strong>. Shown by <a href="https://link.springer.com/article/10.1007/BF01201363">Gentzen</a> in 1935, the theorem states that every statement with a proof that contains cuts, also has a proof that contains <em>no</em> cuts. We have the framework to prove the same result: if every intuitionistic proof corresponds to a terminating Haskell term, where cuts are function application, then computation does the rest of the work. To get a cut-free version of an existing proof, it is sufficient to run the proof fully.</p>

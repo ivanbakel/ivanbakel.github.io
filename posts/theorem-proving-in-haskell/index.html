@@ -10,6 +10,7 @@
 <link rel="canonical" href="https://ivanbakel.github.io/posts/theorem-proving-in-haskell/">
 <!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Isaac van Bakel">
 <link rel="prev" href="../intuitionistic-logic-in-haskell/" title="Intuitionistic logic in Haskell" type="text/html">
+<link rel="next" href="../yesod-transformer-library-announced/" title="The Yesod Transformer Library " type="text/html">
 <meta property="og:site_name" content="Personal Website">
 <meta property="og:title" content="Theorem proving in Haskell">
 <meta property="og:url" content="https://ivanbakel.github.io/posts/theorem-proving-in-haskell/">
@@ -76,7 +77,6 @@ This article follows on from the previous one on intuitionistic logic in Haskell
   <span class="o">-</span> <span class="kp">exact</span> <span class="n">b</span><span class="o">.</span>      <span class="c">(* env: { A, B : Prop ; a : A ; b : B }, goals: {} *)</span>
   <span class="kn">Qed</span><span class="o">.</span>
 </pre>
-
 <p>At the start of the proof, the environment is empty and there is one goal - the whole statement. The first step, <code>intros</code>, introduces names into the environment: <code>A</code>, <code>B</code>, for the types, and <code>a</code>, <code>b</code> for the proofs - and changes the goal to <code>A /\ B</code>. The second step <code>split</code>s one goal into two - <code>A</code> and <code>B</code>. The third and fourth steps each prove a single goal by providing a term which is <code>exact</code>ly its proof.</p>
 <p>Coq also allows for such terms to be expressed as functions directly: and vice versa. There's no distinction between what's expressible in the "code style" or the "proof style" of Coq terms.</p>
 <h3>Proof style with monads</h3>
@@ -87,13 +87,11 @@ This article follows on from the previous one on intuitionistic logic in Haskell
 <pre class="code literal-block"><span class="kr">class</span> <span class="p">(</span><span class="kt">IxApplicative</span> <span class="n">m</span><span class="p">)</span> <span class="ow">=&gt;</span> <span class="kt">IxMonad</span> <span class="n">m</span> <span class="kr">where</span>
   <span class="n">ibind</span> <span class="ow">::</span> <span class="p">(</span><span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">j</span> <span class="n">k</span> <span class="n">b</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">i</span> <span class="n">j</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">i</span> <span class="n">k</span> <span class="n">b</span>
 </pre>
-
 <p>An <code>IxMonad</code> instance is a type constructor with 3 arguments: the old typestate, the new typestate, and the monad argument. When sequencing indexed monad values, the typestates must "align": the new typestate of the first value must be the old typestate of the second. This is easier to see in the <code>IxApplicative</code> definition (slightly modified here for readability):</p>
 <pre class="code literal-block"><span class="kr">class</span> <span class="kt">IxFunctor</span> <span class="n">m</span> <span class="ow">=&gt;</span> <span class="kt">IxApplicative</span> <span class="n">m</span> <span class="kr">where</span>
   <span class="n">ipure</span> <span class="ow">::</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">i</span> <span class="n">i</span> <span class="n">a</span>
   <span class="n">iap</span> <span class="ow">::</span> <span class="n">m</span> <span class="n">i</span> <span class="n">j</span> <span class="p">(</span><span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">j</span> <span class="n">k</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">i</span> <span class="n">k</span> <span class="n">b</span>
 </pre>
-
 <p><code>iap</code>, as well as applying the function type, also "composes" the typestates: the resulting monad value has the old typestate of the first argument, and the new typestate of the second.</p>
 <h4>The goal as typestate</h4>
 <p>So we might want an indexed monad; but what should its typestate be? The type-level information we care about are the environment and the goal. However, the environment (a collection of variables and definitions) is already handled by Haskell as a programming language: do-notation even has a way to bind variables, with the arrow <code>&lt;-</code>.</p>
@@ -104,33 +102,27 @@ This article follows on from the previous one on intuitionistic logic in Haskell
 <pre class="code literal-block"><span class="nf">x</span> <span class="ow">&lt;-</span> <span class="n">myTransformation</span> <span class="c1">-- myTransformation has type m i j a</span>
 <span class="o">...</span>                   <span class="c1">-- from here on, x has type a</span>
 </pre>
-
 <p>The remaining proof with goal <code>j</code> will have access to a proof of <code>a</code> through the variable <code>x</code>. Such a goal transformation <em>introduces</em> <code>a</code> as a hypothesis for the rest of the proof; if the goal from that point on is <code>j</code>, then the proof shows that <code>a -&gt; j</code>.</p>
 <p>But the original goal was <code>i</code>, not <code>j</code> - so the goal transformation has to justify why a proof of <code>a -&gt; j</code> gives a proof of <code>i</code>. In other words, the goal transformation is an inhabitant of <code>(a -&gt; j) -&gt; i</code>.</p>
 <p>This gives our monad definition:</p>
 <pre class="code literal-block"><span class="kr">data</span> <span class="kt">Tactic</span> <span class="n">i</span> <span class="n">j</span> <span class="n">a</span>
   <span class="ow">=</span> <span class="kt">Tactic</span> <span class="p">((</span><span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">j</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">i</span><span class="p">)</span>
 </pre>
-
 <p>The name <code>Tactic</code> comes from the term used for such proof steps in many theorem provers.</p>
 <h4>Some tactics</h4>
 <p>Now that we know the shape of the monad, it's very easy to start writing tactic instances like the ones we would expect to see in any theorem prover (if you're not interested in examples, skip this section).</p>
 <p>Coq's <code>intro</code>, for example, allows you to give a name to the left side of an <code>-&gt;</code>:</p>
 <pre class="code literal-block"><span class="nf">intro</span> <span class="ow">::</span> <span class="kt">Tactic</span> <span class="p">(</span><span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="n">b</span> <span class="n">a</span>
 </pre>
-
 <p>Such a goal transformation requires an inhabitant for <code>(a -&gt; b) -&gt; (a -&gt; b)</code> - so the definition is pretty obvious:</p>
 <pre class="code literal-block"><span class="nf">intro</span> <span class="ow">=</span> <span class="kt">Tactic</span> <span class="n">id</span>
 </pre>
-
 <p>The <code>left</code> tactic simplifies proving an <code>\/</code>:</p>
 <pre class="code literal-block"><span class="nf">left</span> <span class="ow">::</span> <span class="kt">Tactic</span> <span class="p">(</span><span class="n">a</span> <span class="o">\/</span> <span class="n">b</span><span class="p">)</span> <span class="n">a</span> <span class="nb">()</span>
 </pre>
-
 <p>This tactic doesn't introduce any hypothesis - and that won't be a problem later, since we can always construct a value of type <code>()</code> when necessary.</p>
 <pre class="code literal-block"><span class="nf">left</span> <span class="ow">=</span> <span class="kt">Tactic</span> <span class="nf">\</span><span class="n">f</span> <span class="ow">-&gt;</span> <span class="kt">Left</span> <span class="p">(</span><span class="n">f</span> <span class="nb">()</span><span class="p">)</span>
 </pre>
-
 <h3>Canonical truth</h3>
 <p>The <code>Tactic</code> monad (once you define the necessary typeclass instances) lets you do proof steps with do notation: but we still can't describe a whole proof. Specifically, we don't know when we are "done" proving a statement - after all, we could always apply further goal transformations.</p>
 <p>We could be satisfied by reducing the proof of a statement to the proof of some other statement which we've already proved i.e. producing a term of type <code>Tactic a b ()</code>, where we know <code>b</code> and want to prove <code>a</code>. Such a proof would inhabit <code>(() -&gt; b) -&gt; a)</code> - and since <code>() -&gt; b</code> is inhabited (since we know <code>b</code> to be true), then we can get an inhabitant for <code>a</code>.</p>
@@ -141,28 +133,22 @@ This article follows on from the previous one on intuitionistic logic in Haskell
 <pre class="code literal-block"><span class="nf">exact</span> <span class="ow">::</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">Tactic</span> <span class="n">a</span> <span class="nb">()</span> <span class="nb">()</span>
 <span class="nf">exact</span> <span class="n">proof</span> <span class="ow">=</span> <span class="kt">Tactic</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">proof</span>
 </pre>
-
 <p>The <code>split</code> tactic in Coq turns a goal of <code>A /\ B</code> into two subgoals of <code>A</code> and <code>B</code>. However, the <code>Tactic</code> monad doesn't support multiple goals: so how can we represent it? The answer is through <em>subproofs</em>:</p>
 <pre class="code literal-block"><span class="nf">split</span> <span class="ow">::</span> <span class="kt">Tactic</span> <span class="n">a</span> <span class="nb">()</span> <span class="nb">()</span> <span class="ow">-&gt;</span> <span class="kt">Tactic</span> <span class="n">b</span> <span class="nb">()</span> <span class="nb">()</span> <span class="ow">-&gt;</span> <span class="kt">Tactic</span> <span class="p">(</span><span class="n">a</span> <span class="o">/\</span> <span class="n">b</span><span class="p">)</span> <span class="nb">()</span> <span class="nb">()</span>
 </pre>
-
 <p>These subproofs require solving their respective subgoals. The tactic then allows you to solve a goal of <code>a /\ b</code> by providing a proof for each of <code>a</code> and <code>b</code>. The resulting proofs can finally be combined:</p>
 <pre class="code literal-block"><span class="nf">split</span> <span class="p">(</span><span class="kt">Tactic</span> <span class="n">getA</span><span class="p">)</span> <span class="p">(</span><span class="kt">Tactic</span> <span class="n">getB</span><span class="p">)</span> <span class="ow">=</span> <span class="kt">Tactic</span> <span class="nf">\</span><span class="n">trivial</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">getA</span> <span class="n">trivial</span><span class="p">,</span> <span class="n">getB</span> <span class="n">trivial</span><span class="p">)</span>
 </pre>
-
 <p>This technique of subproofs allows for defining lots of other useful tactics. The <code>assert</code> tactic in Coq allows for stating a subgoal, proving it, and giving the resulting proof a name to use later.</p>
 <pre class="code literal-block"><span class="nf">assert</span> <span class="ow">::</span> <span class="kt">Tactic</span> <span class="n">a</span> <span class="nb">()</span> <span class="nb">()</span> <span class="ow">-&gt;</span> <span class="kt">Tactic</span> <span class="n">i</span> <span class="n">i</span> <span class="n">a</span>
 </pre>
-
 <p><code>assert</code> takes the proof of the subgoal, and allows it to be bound in do-notation. Using the bound variable later on just uses the subproof.</p>
 <pre class="code literal-block"><span class="nf">assert</span> <span class="p">(</span><span class="kt">Tactic</span> <span class="n">getSubproof</span><span class="p">)</span> <span class="ow">=</span> <span class="kt">Tactic</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">getSubproof</span> <span class="n">id</span>
 </pre>
-
 <h3>A complete proof</h3>
 <p>We can then define a complete proof as one which solves its goal:</p>
 <pre class="code literal-block"><span class="kr">data</span> <span class="kt">Proof</span> <span class="n">a</span> <span class="ow">=</span> <span class="kt">Proof</span> <span class="p">(</span><span class="kt">Tactic</span> <span class="n">a</span> <span class="nb">()</span> <span class="nb">()</span><span class="p">)</span>
 </pre>
-
 <p>Of course, such a definition is justified only if we can use it to get an inhabitant of <code>a</code>. In fact, this defines a complete proof as inhabitant of <code>(() -&gt; ()) -&gt; a</code>, which can very easily be used to obtain an inhabitant of <code>a</code>:</p>
 <pre class="code literal-block"><span class="nf">useProof</span> <span class="ow">::</span> <span class="kt">Proof</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">a</span>
 <span class="nf">useProof</span> <span class="p">(</span><span class="kt">Proof</span> <span class="p">(</span><span class="kt">Tactic</span> <span class="n">transformation</span><span class="p">))</span> <span class="ow">=</span> <span class="n">transformation</span> <span class="n">id</span>
@@ -173,6 +159,9 @@ This article follows on from the previous one on intuitionistic logic in Haskell
     </a>
     <a href="https://ivanbakel.github.io/posts/intuitionistic-logic-in-haskell/" rel="prev" title="Intuitionistic logic in Haskell">
        <i class="fa fa-2x fa-fw fa-arrow-circle-left" aria-hidden="true" title="Previous post: Intuitionistic logic in Haskell"></i>
+    </a>
+    <a href="https://ivanbakel.github.io/posts/yesod-transformer-library-announced/" rel="next" title="Next post: The Yesod Transformer Library " aria-label="Next post: The Yesod Transformer Library ">
+       <i class="fa fa-2x fa-fw fa-arrow-circle-right" aria-hidden="true"></i>
     </a>
     <span class="post-sharing">
      <a href="http://twitter.com/share?text=Theorem+proving+in+Haskell&amp;url=https%3A%2F%2Fivanbakel.github.io%2Fposts%2Ftheorem-proving-in-haskell%2F" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;" aria-label="Share on Twitter">
